@@ -1,0 +1,30 @@
+# Stems générés
+backend/stems/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Fichiers de test locaux
+*.mp3
+test_*.wav
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Ancienne racine (avant réorg)
+stems/

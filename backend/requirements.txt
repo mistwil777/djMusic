@@ -1,0 +1,6 @@
+flask>=2.3
+flask-cors>=4.0
+gunicorn>=21.0
+demucs>=4.0
+imageio-ffmpeg>=0.4.9
+soundfile>=0.12
