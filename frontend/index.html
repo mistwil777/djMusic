@@ -162,6 +162,11 @@
         </select>
       </label>
       <div id="seq-pos">1 : 1</div>
+      <label class="seq-ctrl">Loop
+        <input type="number" id="seq-loop-in"  value="1"  min="1" max="64" title="Mesure de début">
+        <span>→</span>
+        <input type="number" id="seq-loop-out" value="16" min="1" max="64" title="Mesure de fin">
+      </label>
       <button id="btn-add-track" class="seq-btn-sm">+ Piste</button>
     </div>
 
@@ -221,6 +226,11 @@
               <option value="0.5">1/2</option>
               <option value="1">1</option>
             </select>
+          </label>
+          <label class="pr-snap-label">Loop
+            <input type="number" id="pr-loop-in"  value="1"  min="1" style="width:36px">
+            →
+            <input type="number" id="pr-loop-out" value="16" min="1" style="width:36px">
           </label>
           <button id="pr-close">×</button>
         </div>

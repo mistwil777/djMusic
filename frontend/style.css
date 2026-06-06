@@ -389,6 +389,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-size: 0.85rem;
   outline: none;
 }
+#seq-loop-in, #seq-loop-out { width: 38px; }
+.pr-snap-label input[type="number"] {
+  background: var(--surface3);
+  border: 1px solid #333;
+  color: var(--text);
+  height: 24px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.78rem;
+  outline: none;
+}
 .seq-ctrl input[type="number"]:focus { border-color: var(--accent); }
 .seq-ctrl select {
   background: var(--surface3);

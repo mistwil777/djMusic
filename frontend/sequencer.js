@@ -29,19 +29,26 @@ const SEQ = {
   // Recording
   recordingTrackId: null,
   pendingNotes: {},            // noteId -> event en cours
+
+  // Région de boucle (1-indexé, en mesures)
+  loopInBar:  1,
+  loopOutBar: null,            // null = totalBars
 };
 window.SEQ = SEQ;
 
 let _trkSeq = 1;
 
 // ── Helpers tempo ──────────────────────────────────────────
-const totalBeats  = () => SEQ.totalBars * SEQ.beatsPerBar;
-const beatSec     = () => 60 / SEQ.bpm;
-const loopSec     = () => totalBeats() * beatSec();
-const currentBeat = () => {
-  if (SEQ.state === 'stopped') return 0;
+const totalBeats      = () => SEQ.totalBars * SEQ.beatsPerBar;
+const loopInBeat      = () => ((SEQ.loopInBar  ?? 1) - 1) * SEQ.beatsPerBar;
+const loopOutBeat     = () =>  (SEQ.loopOutBar ?? SEQ.totalBars) * SEQ.beatsPerBar;
+const loopRegionBeats = () => loopOutBeat() - loopInBeat();
+const beatSec         = () => 60 / SEQ.bpm;
+const loopSec         = () => loopRegionBeats() * beatSec();
+const currentBeat     = () => {
+  if (SEQ.state === 'stopped') return loopInBeat();
   const elapsed = (window.ctx?.currentTime || 0) - SEQ.loopStartCtxTime;
-  return Math.min(elapsed / beatSec(), totalBeats() - 0.001);
+  return loopInBeat() + Math.min(elapsed / beatSec(), loopRegionBeats() - 0.001);
 };
 
 // ══════════════════════════════════════════════════════════
@@ -109,7 +116,7 @@ function seqStop() {
   cancelAnimationFrame(SEQ.rafId);
   SEQ.loopScheduled = false;
 
-  _updatePlayheadPos(0);
+  _updatePlayheadPos(loopInBeat());
   _updateTransportUI();
   renderAllTracks();
   window.dispatchEvent(new CustomEvent('seq:stop'));
@@ -140,11 +147,13 @@ function _runScheduler() {
 
   if (SEQ.loopScheduled) return;
 
-  // Planifie tous les événements de ce loop
+  // Planifie les événements dans la région de boucle
   SEQ.tracks.forEach(track => {
     if (track.muted) return;
     track.events.forEach(ev => {
-      const when = SEQ.loopStartCtxTime + ev.startBeat * beatSec();
+      const beat = ev.startBeat;
+      if (beat < loopInBeat() || beat >= loopOutBeat()) return;
+      const when = SEQ.loopStartCtxTime + (beat - loopInBeat()) * beatSec();
       if (when >= now - 0.01) _fireEvent(track, ev, when);
     });
   });
@@ -196,18 +205,19 @@ window.seqRecordDrumHit = function(drumId) {
 // ══════════════════════════════════════════════════════════
 function _animPlayhead() {
   if (SEQ.state === 'stopped') return;
-  _updatePlayheadPos(currentBeat() / totalBeats());
+  _updatePlayheadPos(currentBeat());
   SEQ.rafId = requestAnimationFrame(_animPlayhead);
 }
 
-function _updatePlayheadPos(frac) {
+function _updatePlayheadPos(beat) {
+  const frac = beat / totalBeats();
   const ph = document.getElementById('seq-playhead');
   if (ph) ph.style.left = Math.min(100, frac * 100) + '%';
 
-  const bar  = Math.floor(frac * SEQ.totalBars) + 1;
-  const beat = Math.floor((frac * totalBeats()) % SEQ.beatsPerBar) + 1;
-  const el   = document.getElementById('seq-pos');
-  if (el) el.textContent = bar + ' : ' + beat;
+  const bar    = Math.floor(beat / SEQ.beatsPerBar) + 1;
+  const beatNr = Math.floor(beat % SEQ.beatsPerBar) + 1;
+  const el = document.getElementById('seq-pos');
+  if (el) el.textContent = bar + ' : ' + beatNr;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -276,9 +286,19 @@ function renderTrack(trackId) {
       c.restore();
     }
   });
+
+  // Overlay région de boucle
+  const lib = loopInBeat() / tb;
+  const lob = loopOutBeat() / tb;
+  c.fillStyle = 'rgba(124,58,237,0.07)';
+  c.fillRect(lib * w, 0, (lob - lib) * w, h);
+  c.fillStyle = 'rgba(124,58,237,0.6)';
+  c.fillRect(lib * w, 0, 2, h);
+  c.fillRect(Math.min(lob * w - 2, w - 2), 0, 2, h);
 }
 
-window.renderTrack = renderTrack;
+window.renderTrack     = renderTrack;
+window.renderAllTracks = renderAllTracks;
 
 function _midiNoteIdx(freq) {
   const midi = Math.round(12 * Math.log2(freq / 440) + 69);
@@ -408,6 +428,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Ajouter une piste
   document.getElementById('btn-add-track')?.addEventListener('click', () => {
     addTrack('synth');
+  });
+
+  // Loop in/out
+  document.getElementById('seq-loop-in')?.addEventListener('change', e => {
+    const max = (SEQ.loopOutBar ?? SEQ.totalBars) - 1;
+    const v = Math.max(1, Math.min(+e.target.value || 1, max));
+    SEQ.loopInBar = v; e.target.value = v;
+    const prEl = document.getElementById('pr-loop-in');
+    if (prEl) prEl.value = v;
+    renderAllTracks();
+  });
+  document.getElementById('seq-loop-out')?.addEventListener('change', e => {
+    const v = Math.max((SEQ.loopInBar ?? 1) + 1, Math.min(+e.target.value || SEQ.totalBars, SEQ.totalBars));
+    SEQ.loopOutBar = v; e.target.value = v;
+    const prEl = document.getElementById('pr-loop-out');
+    if (prEl) prEl.value = v;
+    renderAllTracks();
   });
 
   // Pistes par défaut
