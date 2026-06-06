@@ -156,9 +156,9 @@
       <label class="seq-ctrl">Mesures
         <select id="seq-bars">
           <option value="2">2</option>
-          <option value="4" selected>4</option>
+          <option value="4">4</option>
           <option value="8">8</option>
-          <option value="16">16</option>
+          <option value="16" selected>16</option>
         </select>
       </label>
       <div id="seq-pos">1 : 1</div>
@@ -207,6 +207,32 @@
     <div id="stem-tracks"></div>
   </section>
 
+  <!-- ═══ PIANO ROLL ═══ -->
+  <div id="pr-overlay" hidden>
+    <div id="pr-modal">
+      <div id="pr-toolbar">
+        <span id="pr-title">Piano Roll</span>
+        <div id="pr-toolbar-right">
+          <label class="pr-snap-label">Snap
+            <select id="pr-snap">
+              <option value="0.0625">1/16</option>
+              <option value="0.125">1/8</option>
+              <option value="0.25" selected>1/4</option>
+              <option value="0.5">1/2</option>
+              <option value="1">1</option>
+            </select>
+          </label>
+          <button id="pr-close">×</button>
+        </div>
+      </div>
+      <div id="pr-body">
+        <div id="pr-piano-col"><canvas id="pr-piano"></canvas></div>
+        <div id="pr-grid-wrap"><canvas id="pr-grid"></canvas></div>
+      </div>
+    </div>
+    <div id="pr-landscape-hint">Tournez votre appareil en paysage pour le piano roll</div>
+  </div>
+
   <!-- Visualizer -->
   <div id="visualizer-wrap">
     <canvas id="visualizer"></canvas>
@@ -217,5 +243,6 @@
 <script src="app.js"></script>
 <script src="sequencer.js"></script>
 <script src="stems.js"></script>
+<script src="pianoroll.js"></script>
 </body>
 </html>

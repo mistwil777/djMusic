@@ -15,7 +15,7 @@ const NOTES_SEQ     = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 // ── État global ────────────────────────────────────────────
 const SEQ = {
-  bpm: 120, totalBars: 4, beatsPerBar: 4,
+  bpm: 120, totalBars: 16, beatsPerBar: 4,
   state: 'stopped',           // 'stopped' | 'playing' | 'recording'
   tracks: [],
   looping: true,
@@ -30,6 +30,7 @@ const SEQ = {
   recordingTrackId: null,
   pendingNotes: {},            // noteId -> event en cours
 };
+window.SEQ = SEQ;
 
 let _trkSeq = 1;
 
@@ -277,6 +278,8 @@ function renderTrack(trackId) {
   });
 }
 
+window.renderTrack = renderTrack;
+
 function _midiNoteIdx(freq) {
   const midi = Math.round(12 * Math.log2(freq / 440) + 69);
   return ((midi % 12) + 12) % 12;
@@ -318,6 +321,7 @@ function _rebuildUI() {
       </div>
       <div class="trk-actions">
         <button class="trk-btn trk-rec  ${SEQ.recordingTrackId===track.id?'active':''}" title="Piste active pour l'enregistrement">⏺</button>
+        ${track.instrument !== 'drums' ? `<button class="trk-btn trk-pr" title="Piano Roll">✏</button>` : ''}
         <button class="trk-btn trk-mute ${track.muted?'active':''}" title="Mute">M</button>
         <button class="trk-btn trk-clr"  title="Effacer">🗑</button>
         <button class="trk-btn trk-del"  title="Supprimer">×</button>
@@ -325,6 +329,7 @@ function _rebuildUI() {
 
     hdr.querySelector('.trk-name').addEventListener('change', e => { track.name = e.target.value; });
     hdr.querySelector('.trk-instr').addEventListener('change', e => { track.instrument = e.target.value; });
+    hdr.querySelector('.trk-pr')?.addEventListener('click', () => window.prOpen?.(track.id));
     hdr.querySelector('.trk-rec').addEventListener('click', () => {
       SEQ.recordingTrackId = track.id;
       document.querySelectorAll('.trk-rec').forEach(b => b.classList.remove('active'));
